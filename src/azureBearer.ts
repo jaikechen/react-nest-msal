@@ -9,7 +9,6 @@ const config = {
     passReqToCallback: false,
 
 };
-console.log(config)
 
 export const bearerStrategy = new BearerStrategy(config, (token, done) => {
         done(null, {}, token);

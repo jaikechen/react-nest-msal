@@ -1,8 +1,6 @@
 import { FetchActionTypes, FetchRequest } from "./fetchActions"
 import { msalApp, loginRequest } from "core/auth/authConfig"
-
 const baseUrl = '/api/'
-const TOKEN_EXPIRED = 'token expired'
 const buildOption = async (action: FetchRequest) => {
   const { method, requireToken } = action
   const headers: any = { 'Content-Type': 'application/json' }
@@ -12,33 +10,35 @@ const buildOption = async (action: FetchRequest) => {
   if (method !== 'GET') {
     option['body'] = JSON.stringify(action.postData)
   }
-  if (requireToken){
-    const account =  msalApp.getAccount()
-    if (account){
-      const result =await msalApp.acquireTokenSilent(loginRequest)
+  if (requireToken) {
+    try {
+      const result = await msalApp.acquireTokenSilent(loginRequest)
       console.log(result.idToken.rawIdToken)
       headers['Authorization'] = `Bearer ${result.idToken.rawIdToken}`
+    } catch{
+      throw Error('User is not sign in')
     }
   }
   return option
 }
 
-function getResult( text: string) {
-  let result :any
+function getResult(text: string) {
+  let result: any
   try {
     result = JSON.parse(text)
   } catch{
-    result = text 
+    result = text
   }
   return result
 }
 
-function getError(text:string) {
+function getError(text: string) {
   let error = text
   try {
     let json = JSON.parse(text)
+    console.log(json)
     error = json.message ?? json.error ?? text
-  } catch{ 
+  } catch{
   }
   return error
 }
@@ -48,12 +48,14 @@ export const fetchMiddleware = ({ dispatch }: any) => (next: any) => async (acti
     case FetchActionTypes.FetchRequest: {
       const { url, onSuccess, onError, onLoading } = action
       const fullUrl = baseUrl + url
-      let error: any 
-      let result:any 
+      let error: any
+      let result: any
       try {
         if (onLoading) {
-          dispatch({ type: onLoading, 
-            payload: { ...action.payload,url } })
+          dispatch({
+            type: onLoading,
+            payload: { ...action.payload, url }
+          })
         }
         const option = await buildOption(action)
         const response = await fetch(fullUrl, option)
@@ -67,10 +69,14 @@ export const fetchMiddleware = ({ dispatch }: any) => (next: any) => async (acti
       } catch (err) {
         error = err
       }
-      
-      dispatch({ type:result? onSuccess:onError, 
-        payload: { ...action.payload, 
-          error, result, url }})
+
+      dispatch({
+        type: result ? onSuccess : onError,
+        payload: {
+          ...action.payload,
+          error, result, url
+        }
+      })
     }
   }
   return next(action)
