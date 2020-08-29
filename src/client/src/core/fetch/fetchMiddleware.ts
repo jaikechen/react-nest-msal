@@ -19,13 +19,7 @@ const buildOption = async (action: FetchRequest) => {
       console.log(result.idToken.rawIdToken)
       headers['Authorization'] = `Bearer ${result.idToken.rawIdToken}`
     }
-    /*
-    const id_token = localStorage.getItem('id_token')
-    console.log(id_token)
-    headers['Authorization'] = `Bearer ${id_token}`
-    */
   }
-  console.log(option)
   return option
 }
 
